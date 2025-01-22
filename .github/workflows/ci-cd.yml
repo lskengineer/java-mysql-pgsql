@@ -1,3 +1,4 @@
+---
 name: CI/CD Pipeline
 
 on:
@@ -10,21 +11,26 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+      # Step 1: Check out the code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Set up Java
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '11'
+          distribution: temurin
+          java-version: "11"
 
+      # Step 3: Build with Maven
       - name: Build with Maven
         run: mvn clean package
 
-      - name: Debug: List target files
+      # Step 4: Debug - List target files
+      - name: Debug - List target files
         run: ls -la target
 
+      # Step 5: Test JFrog CLI
       - name: Test JFrog CLI
         run: |
           curl -fL https://getcli.jfrog.io | sh
@@ -34,9 +40,11 @@ jobs:
             --password=${{ secrets.JFROG_PASSWORD }}
           ./jfrog rt ping --server-id=my-jfrog-server
 
+      # Step 6: Upload Artifact to JFrog
       - name: Upload Artifact to JFrog
         run: |
           ARTIFACT_NAME=$(ls target/*.jar)
           ./jfrog rt u "$ARTIFACT_NAME" "libs-release-local/java-mysql-pgsql/${ARTIFACT_NAME##*/}" \
             --server-id=my-jfrog-server
+
 
