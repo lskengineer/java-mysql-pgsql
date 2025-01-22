@@ -1,5 +1,5 @@
 ---
-name: CI/CD Pipeline with Conditional Steps
+name: CI/CD Pipeline with Conditional Builds
 
 'on':
   push:
@@ -15,25 +15,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Java
+      # Step 2: Detect Changes in Application Code
+      - name: Check for Application Code Changes
+        id: code-check
+        run: |
+          if git diff --quiet HEAD^ HEAD ./src; then
+            echo "changes-detected=false" >> $GITHUB_ENV
+          else
+            echo "changes-detected=true" >> $GITHUB_ENV
+          fi
+
+      # Step 3: Set up Java
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: "17"
 
-      # Step 3: Conditional Build and SonarCloud Analysis
-      - name: Check for Application Code Changes
-        id: code-check
-        run: |
-          git diff --quiet HEAD^ HEAD ./src || \
-          echo "changes-detected=true" >> $GITHUB_ENV
-
-      - name: Build with Maven (if changes detected)
+      # Step 4: Conditional Maven Build
+      - name: Build with Maven
         if: env.changes-detected == 'true'
         run: mvn clean package
 
-      - name: Run SonarCloud Analysis (if changes detected)
+      # Step 5: Conditional SonarCloud Analysis
+      - name: SonarCloud Scan
         if: env.changes-detected == 'true'
         run: |
           mvn sonar:sonar \
@@ -43,7 +48,7 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-      # Step 4: Always Download Artifact from JFrog
+      # Step 6: Always Download Artifact from JFrog
       - name: Download Artifact from JFrog
         run: |
           curl -fL https://getcli.jfrog.io | sh
@@ -55,18 +60,18 @@ jobs:
             "libs-release-local/java-mysql-pgsql/*.jar" \
             ./artifact.jar --server-id=my-jfrog-server
 
-      # Step 5: Build Docker Image
+      # Step 7: Build Docker Image
       - name: Build Docker Image
         run: |
           docker build -t your-dockerhub-username/java-mysql-pgsql:latest \
             --build-arg ARTIFACT=./artifact.jar .
 
-      # Step 6: Log in to DockerHub
+      # Step 8: Log in to DockerHub
       - name: Log in to DockerHub
         run: |
           echo "${{ secrets.DOCKERHUB_PASSWORD }}" | \
           docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      # Step 7: Push Docker Image to DockerHub
+      # Step 9: Push Docker Image to DockerHub
       - name: Push Docker Image
         run: docker push your-dockerhub-username/java-mysql-pgsql:latest
