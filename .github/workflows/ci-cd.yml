@@ -1,0 +1,25 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure JFrog CLI
+        run: |
+          curl -fL https://getcli.jfrog.io | sh
+          ./jfrog config add my-jfrog-server --artifactory-url=${{ secrets.JFROG_URL }} --user=${{ secrets.JFROG_USERNAME }} --password=${{ secrets.JFROG_PASSWORD }}
+
+      - name: Build with Maven
+        run: mvn clean package
+
+      - name: Upload Artifact to JFrog
+        run: ./jfrog rt u target/*.jar libs-release-local/java-mysql-pgsql/ --server-id=my-jfrog-server
+
