@@ -28,7 +28,6 @@ jobs:
       # Step 4: Debug - Check Git Branch
       - name: Debug: Check Git Branch
         run: git branch -a
-
       # Step 5: Perform SonarCloud Analysis
       - name: SonarCloud Scan
         run: |
