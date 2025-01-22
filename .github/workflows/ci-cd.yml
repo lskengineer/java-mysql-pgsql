@@ -1,5 +1,5 @@
 ---
-name: CI/CD Pipeline
+name: CI/CD Pipeline with DockerHub and JFrog
 
 'on':
   push:
@@ -7,8 +7,8 @@ name: CI/CD Pipeline
       - main
 
 jobs:
-  build-and-upload:
-    runs-on: ubuntu-20.04
+  sonarcloud-and-docker:
+    runs-on: ubuntu-latest
 
     steps:
       # Step 1: Check out the code
@@ -20,31 +20,42 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: "11"
+          java-version: "17"
 
-      # Step 3: Build with Maven
-      - name: Build with Maven
-        run: mvn clean package
+      # Step 3: Run SonarCloud Analysis
+      - name: SonarCloud Scan
+        run: |
+          mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=java-mysql-pgsql \
+            -Dsonar.organization=lskengineer \
+            -Dsonar.branch.name=main \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-      # Step 4: Debug - List target files
-      - name: Debug - List target files
-        run: ls -la target
-
-      # Step 5: Test JFrog CLI
-      - name: Test JFrog CLI
+      # Step 4: Download Artifact from JFrog
+      - name: Download Artifact from JFrog
         run: |
           curl -fL https://getcli.jfrog.io | sh
-          ./jfrog config remove my-jfrog-server || true
           ./jfrog config add my-jfrog-server \
             --artifactory-url=${{ secrets.JFROG_URL }} \
             --user=${{ secrets.JFROG_USERNAME }} \
             --password=${{ secrets.JFROG_PASSWORD }}
-          ./jfrog rt ping --server-id=my-jfrog-server
+          ./jfrog rt dl \
+            "libs-release-local/java-mysql-pgsql/*.jar" \
+            ./artifact.jar --server-id=my-jfrog-server
 
-      # Step 6: Upload Artifact to JFrog
-      - name: Upload Artifact to JFrog
+      # Step 5: Build Docker Image
+      - name: Build Docker Image
         run: |
-          ARTIFACT_NAME=$(ls target/*.jar)
-          ./jfrog rt u "$ARTIFACT_NAME" \
-            "libs-release-local/java-mysql-pgsql/${ARTIFACT_NAME##*/}" \
-            --server-id=my-jfrog-server
+          docker build -t your-dockerhub-username/java-mysql-pgsql:latest \
+            --build-arg ARTIFACT=./artifact.jar .
+
+      # Step 6: Log in to DockerHub
+      - name: Log in to DockerHub
+        run: |
+          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | \
+          docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      # Step 7: Push Docker Image to DockerHub
+      - name: Push Docker Image
+        run: docker push your-dockerhub-username/java-mysql-pgsql:latest
