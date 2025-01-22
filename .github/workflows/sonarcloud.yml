@@ -37,5 +37,5 @@ jobs:
             -Dsonar.projectKey=<lskengineer_java-mysql-pgsql> \
             -Dsonar.organization=<lskengineer> \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=<64ad4bdad63c6a5902f346000ca63e193884b4ff>
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
