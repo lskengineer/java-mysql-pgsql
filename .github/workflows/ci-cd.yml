@@ -14,7 +14,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Configure JFrog Server
+      # Step 2: Configure JFrog CLI
       - name: Configure JFrog CLI
         run: |
           curl -fL https://getcli.jfrog.io | sh
@@ -26,7 +26,8 @@ jobs:
       # Step 3: Download Artifact from JFrog
       - name: Download Artifact
         run: |
-          ./jfrog rt dl "libs-release-local/java-mysql-pgsql/*.jar" ./artifact.jar --server-id=my-jfrog-server
+          ./jfrog rt dl "libs-release-local/java-mysql-pgsql/*.jar" ./ --server-id=my-jfrog-server
+          mv ./java-mysql-pgsql-1.0-SNAPSHOT.jar ./artifact.jar
 
       # Step 4: Verify Artifact Exists
       - name: Verify Artifact
@@ -47,3 +48,4 @@ jobs:
       # Step 7: Push Docker Image to DockerHub
       - name: Push Docker Image
         run: docker push your-dockerhub-username/java-mysql-pgsql:latest
+
