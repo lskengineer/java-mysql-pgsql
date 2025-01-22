@@ -45,4 +45,3 @@ jobs:
           ARTIFACT_NAME=$(ls target/*.jar)
           ./jfrog rt u "$ARTIFACT_NAME" "libs-release-local/java-mysql-pgsql/${ARTIFACT_NAME##*/}" \
             --server-id=my-jfrog-server
-
