@@ -27,7 +27,9 @@ jobs:
 
       # Step 4: Debug - Check Git Branch
       - name: Debug: Check Git Branch
-        run: git branch -a
+        run: |
+          git branch -a
+
       # Step 5: Perform SonarCloud Analysis
       - name: SonarCloud Scan
         run: |
@@ -37,3 +39,4 @@ jobs:
             -Dsonar.branch.name=main \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
