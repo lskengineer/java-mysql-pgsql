@@ -7,7 +7,8 @@ on:
 
 jobs:
   build-and-upload:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -21,9 +22,21 @@ jobs:
       - name: Build with Maven
         run: mvn clean package
 
+      - name: Debug: List target files
+        run: ls -la target
+
+      - name: Test JFrog CLI
+        run: |
+          curl -fL https://getcli.jfrog.io | sh
+          ./jfrog config add my-jfrog-server \
+            --artifactory-url=${{ secrets.JFROG_URL }} \
+            --user=${{ secrets.JFROG_USERNAME }} \
+            --password=${{ secrets.JFROG_PASSWORD }}
+          ./jfrog rt ping --server-id=my-jfrog-server
+
       - name: Upload Artifact to JFrog
-        run: ./upload-to-jfrog.sh
-        env:
-          JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
-          JFROG_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
+        run: |
+          ARTIFACT_NAME=$(ls target/*.jar)
+          ./jfrog rt u "$ARTIFACT_NAME" "libs-release-local/java-mysql-pgsql/${ARTIFACT_NAME##*/}" \
+            --server-id=my-jfrog-server
 
