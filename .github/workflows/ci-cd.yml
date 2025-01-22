@@ -34,6 +34,7 @@ jobs:
       - name: Test JFrog CLI
         run: |
           curl -fL https://getcli.jfrog.io | sh
+          ./jfrog config remove my-jfrog-server || true # Remove if it exists
           ./jfrog config add my-jfrog-server \
             --artifactory-url=${{ secrets.JFROG_URL }} \
             --user=${{ secrets.JFROG_USERNAME }} \
