@@ -23,32 +23,38 @@ jobs:
             --user=${{ secrets.JFROG_USERNAME }} \
             --password=${{ secrets.JFROG_PASSWORD }}
 
-      # Step 3: Download the Most Recent Artifact
-      - name: Download the Most Recent Artifact
+      # Step 3: Download Artifacts from JFrog
+      - name: Download Artifacts
         run: |
-          ./jfrog rt dl "libs-release-local/java-mysql-pgsql/*.jar" ./artifacts/ --server-id=my-jfrog-server
-          # Find the most recent .jar file
+          ./jfrog rt dl "libs-release-local/java-mysql-pgsql/*.jar" ./artifacts/ --flat --server-id=my-jfrog-server
+
+      # Step 4: Find and Rename the Latest Artifact
+      - name: Find and Rename the Latest Artifact
+        run: |
           LATEST_JAR=$(ls -t ./artifacts/*.jar | head -n 1)
+          if [ -z "$LATEST_JAR" ]; then
+            echo "No JAR files found in ./artifacts/"
+            exit 1
+          fi
           echo "Latest JAR: $LATEST_JAR"
           mv "$LATEST_JAR" ./artifact.jar
 
-      # Step 4: Verify Artifact Exists
+      # Step 5: Verify Artifact Exists
       - name: Verify Artifact
         run: ls -la ./artifact.jar
 
-      # Step 5: Build Docker Image
+      # Step 6: Build Docker Image
       - name: Build Docker Image
         run: |
           docker build -t your-dockerhub-username/java-mysql-pgsql:latest \
             --build-arg ARTIFACT=./artifact.jar .
 
-      # Step 6: Log in to DockerHub
+      # Step 7: Log in to DockerHub
       - name: Log in to DockerHub
         run: |
           echo "${{ secrets.DOCKERHUB_PASSWORD }}" | \
           docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      # Step 7: Push Docker Image to DockerHub
+      # Step 8: Push Docker Image to DockerHub
       - name: Push Docker Image
         run: docker push your-dockerhub-username/java-mysql-pgsql:latest
-
