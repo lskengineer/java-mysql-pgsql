@@ -47,4 +47,36 @@ jobs:
           ./jfrog rt u "$ARTIFACT_NAME" "libs-release-local/java-mysql-pgsql/${ARTIFACT_NAME##*/}" \
             --server-id=my-jfrog-server
 
+      # Step 7: Download Artifact from JFrog
+      - name: Download Artifact from JFrog
+        run: |
+          curl -fL https://getcli.jfrog.io | sh
+          ./jfrog config add my-jfrog-server \
+            --artifactory-url=${{ secrets.JFROG_URL }} \
+            --user=${{ secrets.JFROG_USERNAME }} \
+            --password=${{ secrets.JFROG_PASSWORD }}
+          ./jfrog rt dl "libs-release-local/java-mysql-pgsql/*.jar" ./artifact.jar --server-id=my-jfrog-server
 
+      # Step 8: Build Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t your-dockerhub-username/java-mysql-pgsql:latest --build-arg ARTIFACT=./artifact.jar .
+
+      # Step 9: Login to DockerHub
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      # Step 10: Push Docker Image to DockerHub
+      - name: Push Docker Image
+        run: docker push your-dockerhub-username/java-mysql-pgsql:latest
+
+      # Step 11: Commit and Push Generated Files to GitHub
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions@github.com"
+          git add .
+          git commit -m "Automated update: Added generated files"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
