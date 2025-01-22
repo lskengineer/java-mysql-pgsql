@@ -17,10 +17,10 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17' # Set to Java 17 to meet plugin requirements
+          java-version: '17'
 
       - name: Verify Java Version
-        run: java -version # Debug step to confirm Java version
+        run: java -version
 
       - name: SonarCloud Scan
         run: |
@@ -29,3 +29,4 @@ jobs:
             -Dsonar.organization=lskengineer \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
