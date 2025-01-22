@@ -23,11 +23,14 @@ jobs:
             --user=${{ secrets.JFROG_USERNAME }} \
             --password=${{ secrets.JFROG_PASSWORD }}
 
-      # Step 3: Download Artifact from JFrog
-      - name: Download Artifact
+      # Step 3: Download the Most Recent Artifact
+      - name: Download the Most Recent Artifact
         run: |
-          ./jfrog rt dl "libs-release-local/java-mysql-pgsql/*.jar" ./ --server-id=my-jfrog-server
-          mv ./java-mysql-pgsql-1.0-SNAPSHOT.jar ./artifact.jar
+          ./jfrog rt dl "libs-release-local/java-mysql-pgsql/*.jar" ./artifacts/ --server-id=my-jfrog-server
+          # Find the most recent .jar file
+          LATEST_JAR=$(ls -t ./artifacts/*.jar | head -n 1)
+          echo "Latest JAR: $LATEST_JAR"
+          mv "$LATEST_JAR" ./artifact.jar
 
       # Step 4: Verify Artifact Exists
       - name: Verify Artifact
