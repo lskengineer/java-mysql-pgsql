@@ -1,5 +1,5 @@
 ---
-name: CI/CD Pipeline with DockerHub and JFrog
+name: CI/CD Pipeline with Conditional Steps
 
 'on':
   push:
@@ -7,7 +7,7 @@ name: CI/CD Pipeline with DockerHub and JFrog
       - main
 
 jobs:
-  sonarcloud-and-docker:
+  conditional-build-and-docker:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,17 +22,28 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # Step 3: Run SonarCloud Analysis
-      - name: SonarCloud Scan
+      # Step 3: Conditional Build and SonarCloud Analysis
+      - name: Check for Application Code Changes
+        id: code-check
         run: |
-          mvn clean verify sonar:sonar \
+          git diff --quiet HEAD^ HEAD ./src || \
+          echo "changes-detected=true" >> $GITHUB_ENV
+
+      - name: Build with Maven (if changes detected)
+        if: env.changes-detected == 'true'
+        run: mvn clean package
+
+      - name: Run SonarCloud Analysis (if changes detected)
+        if: env.changes-detected == 'true'
+        run: |
+          mvn sonar:sonar \
             -Dsonar.projectKey=java-mysql-pgsql \
             -Dsonar.organization=lskengineer \
             -Dsonar.branch.name=main \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-      # Step 4: Download Artifact from JFrog
+      # Step 4: Always Download Artifact from JFrog
       - name: Download Artifact from JFrog
         run: |
           curl -fL https://getcli.jfrog.io | sh
