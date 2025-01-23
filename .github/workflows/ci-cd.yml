@@ -46,8 +46,8 @@ jobs:
       # Step 6: Build Docker Image
       - name: Build Docker Image
         run: |
-          docker build -t your-dockerhub-username/java-mysql-pgsql:latest \
-            --build-arg ARTIFACT=./artifact.jar .
+          docker build -t lskengineer/java-mysql-pgsql:latest \
+      --build-arg ARTIFACT=./artifact.jar .
 
       # Step 7: Log in to DockerHub
       - name: Log in to DockerHub
