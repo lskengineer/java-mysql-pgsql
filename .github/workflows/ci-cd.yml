@@ -57,4 +57,4 @@ jobs:
 
       # Step 8: Push Docker Image to DockerHub
       - name: Push Docker Image
-        run: docker push your-dockerhub-username/java-mysql-pgsql:latest
+        run: docker push lskengineer/java-mysql-pgsql:latest
